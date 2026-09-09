@@ -32,44 +32,46 @@ class Program
             using var scope = host.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ControlEPDbContext>();
 
+            if (!await ProbarConexionBaseDatos(db))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No fue posible conectarse a la base de datos. Revise las configuraciones de la aplicación e intente nuevamente.");
+                Console.ResetColor();
+                return;
+            }
+
+            Console.WriteLine("Conexión a la base de datos verificada correctamente.");
             Console.WriteLine(" --- Procesando consultas --- ");
-            
-            var cantidadClientes = await db.Clientes.AsNoTracking().Where(c => c.Estado_Id == 1 && c.Eliminado == false).CountAsync();
 
-
-            Console.WriteLine($"1) Cantidad de clientes activos: {cantidadClientes}");
-
-            Console.WriteLine($"2) Lista de clientes activos");
-
-            List<ClienteEstado> clientes = await db.Clientes
-                .Where(c => c.Estado_Id == 1 && !c.Eliminado)
-                .OrderBy(c => c.Id)
-                .Select(c => new ClienteEstado
+            List<ClienteEstado> clientesConReglaReintentos = await (
+                from cliente in db.Clientes
+                join producto in db.Productos on cliente.Producto_Id equals producto.Id
+                join regla in db.ReglasFacturacionCobranzaProductosTemplate
+                    on producto.ProductoTemplate_Id equals regla.ProductoTemplate_Id
+                where cliente.Estado_Id == 1
+                    && !cliente.Eliminado
+                    && regla.Regla_FacturacionCobranza_Id == 1
+                select new ClienteEstado
                 {
-                    Id = c.Id,
-                    Nombre = c.Nombre,
-                    Apellido = c.Apellido,
-                    // Manejo de null por si la relación es opcional
-                    Reintentos = c.EstadosDePago != null ? c.EstadosDePago.Reintentos : 0,
-                    PagosPendientes = c.EstadosDePago != null ? c.EstadosDePago.PagosPendientes : 0
+                    Id = cliente.Id,
+                    Nombre = cliente.Nombre,
+                    Apellido = cliente.Apellido,
+                    Reintentos = cliente.EstadosDePago != null ? cliente.EstadosDePago.Reintentos : 0,
+                    PagosPendientes = cliente.EstadosDePago != null ? cliente.EstadosDePago.PagosPendientes : 0
                 })
+                .Distinct()
+                .OrderBy(c => c.Id)
                 .AsNoTracking()
                 .ToListAsync();
 
-            var clientesT = await db.Clientes.AsNoTracking().Where(c => c.Estado_Id == 1 && c.Eliminado == false).ToListAsync();
+            Console.WriteLine("1) Clientes activos con la regla de reintentos");
+            foreach (var cliente in clientesConReglaReintentos)
+            {
+                Console.WriteLine($"{cliente.Id}: {cliente.Nombre} {cliente.Apellido}");
+            }
+            Console.WriteLine($"Cantidad: {clientesConReglaReintentos.Count}");
 
-            var q = clientesT.Join(await db.Productos.ToListAsync(), c => c.Producto_Id, p => p.Id, (c, p) => new { c, p })
-                .Join(await db.ProductosTemplates.Where(pt=>pt.Id != 148).ToListAsync(), cp => cp.p.ProductoTemplate_Id, pt => pt.Id, (p, pt) => new { p.c, p.p, pt });
-
-            //foreach (var item in q)
-            //{
-            //    Console.WriteLine(string.Join(" - ",[item.c.Nombre, item.p.Nombre, item.pt.Nombre]));
-            //}
-            Console.WriteLine($"Cantidad: {q.Count()}");
-
-            ///
-
-            Console.WriteLine("3) Listado de control de pagos pendientes");
+            Console.WriteLine("2) Listado de control de pagos pendientes");
             var pagos = await db.Clientes.Include(c => c.EstadosDePago)
                                  .Where(c =>
                                      !c.Eliminado &&
@@ -113,6 +115,18 @@ class Program
 
             Console.WriteLine(" === FIN === ");
             Console.ReadLine();
+        }
+
+        private static async Task<bool> ProbarConexionBaseDatos(ControlEPDbContext db)
+        {
+            try
+            {
+                return await db.Database.CanConnectAsync();
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private static async Task CrearArchivoSalida(List<PagoAdeudado> noCoincidentes)
@@ -172,4 +186,3 @@ class Program
         public int PagosPendientes { get; set; }
     }
 }
-

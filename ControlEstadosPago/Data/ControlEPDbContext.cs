@@ -19,6 +19,7 @@ namespace ControlEstadosPago.Data
         public DbSet<Pago> Pagos => Set<Pago>();
         public DbSet<Producto> Productos => Set<Producto>();
         public DbSet<ProductosTemplate> ProductosTemplates => Set<ProductosTemplate>();
+        public DbSet<Regla_FacturacionCobranza_ProductoTemplate> ReglasFacturacionCobranzaProductosTemplate => Set<Regla_FacturacionCobranza_ProductoTemplate>();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -31,4 +32,3 @@ namespace ControlEstadosPago.Data
     }
 
 }
-

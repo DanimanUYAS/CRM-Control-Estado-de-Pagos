@@ -32,6 +32,15 @@ class Program
             using var scope = host.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ControlEPDbContext>();
 
+            if (!await ProbarConexionBaseDatos(db))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No fue posible conectarse a la base de datos. Revise las configuraciones de la aplicación e intente nuevamente.");
+                Console.ResetColor();
+                return;
+            }
+
+            Console.WriteLine("Conexión a la base de datos verificada correctamente.");
             Console.WriteLine(" --- Procesando consultas --- ");
             
             var cantidadClientes = await db.Clientes.AsNoTracking().Where(c => c.Estado_Id == 1 && c.Eliminado == false).CountAsync();
@@ -115,6 +124,18 @@ class Program
             Console.ReadLine();
         }
 
+        private static async Task<bool> ProbarConexionBaseDatos(ControlEPDbContext db)
+        {
+            try
+            {
+                return await db.Database.CanConnectAsync();
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         private static async Task CrearArchivoSalida(List<PagoAdeudado> noCoincidentes)
         {
 
@@ -172,4 +193,3 @@ class Program
         public int PagosPendientes { get; set; }
     }
 }
-

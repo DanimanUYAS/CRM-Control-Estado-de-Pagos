@@ -1,0 +1,91 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+
+namespace ControlEstadosPago.Models;
+
+[Table("Pagos2")]
+public partial class Pagos2
+{
+    [Key]
+    public int Id { get; set; }
+
+    [Column(TypeName = "decimal(18, 0)")]
+    public decimal? MontoViejo { get; set; }
+
+    [Column(TypeName = "datetime")]
+    public DateTime? Fecha { get; set; }
+
+    public int? Cuota { get; set; }
+
+    [StringLength(50)]
+    [Unicode(false)]
+    public string? NumeroFactura { get; set; }
+
+    public bool? YaCobrado { get; set; }
+
+    public int? Cliente_Id { get; set; }
+
+    public int? FormaDePago_Id { get; set; }
+
+    public int? TarjetaDeCredito_Id { get; set; }
+
+    public bool? YaFacturado { get; set; }
+
+    public int? ProcesoFacturacion { get; set; }
+
+    public bool? YaGeneroCobranza { get; set; }
+
+    [StringLength(50)]
+    public string? MesDeCargo { get; set; }
+
+    [StringLength(50)]
+    public string? CodigoAutorizacion { get; set; }
+
+    public int? DocumentoFacturacion_Id { get; set; }
+
+    [StringLength(300)]
+    public string? Descripcion { get; set; }
+
+    public int? ProcesoGeneracion { get; set; }
+
+    public int? ProcesoCobro { get; set; }
+
+    [Column(TypeName = "datetime")]
+    public DateTime? FechaGeneracion { get; set; }
+
+    [Column(TypeName = "datetime")]
+    public DateTime? FechaCobro { get; set; }
+
+    public bool? EsFacturaDeBaja { get; set; }
+
+    public int? FacturaAsociada_Id { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? Monto { get; set; }
+
+    [StringLength(20)]
+    public string? NumeroTarjeta { get; set; }
+
+    [StringLength(20)]
+    public string? TipoTarjeta { get; set; }
+
+    [StringLength(15)]
+    public string? Documento { get; set; }
+
+    public int? MesCargoNumero { get; set; }
+
+    public int? AñoCargoNumero { get; set; }
+
+    public int? TipoTarjeta_Id { get; set; }
+
+    [ForeignKey("Cliente_Id")]
+    [InverseProperty("Pagos2s")]
+    public virtual Cliente? Cliente { get; set; }
+
+    [ForeignKey("FormaDePago_Id")]
+    [InverseProperty("Pagos2s")]
+    public virtual FormasDePago? FormaDePago { get; set; }
+}
